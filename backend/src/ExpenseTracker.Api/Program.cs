@@ -1,3 +1,4 @@
+using ExpenseTracker.Api.Endpoints;
 using ExpenseTracker.Api.Extensions;
 using ExpenseTracker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -35,5 +36,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+app.MapAuthEndpoints();
+app.MapCategoryEndpoints();
+app.MapTransactionEndpoints();
 
 app.Run();
