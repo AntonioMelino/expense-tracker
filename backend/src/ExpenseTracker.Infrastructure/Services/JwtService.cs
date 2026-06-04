@@ -72,7 +72,7 @@ public class JwtService(IConfiguration config) : IJwtService
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
         };
 
-        var handler = new JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
         try
         {
             var principal = handler.ValidateToken(token, validationParams, out var securityToken);
