@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,13 +19,7 @@ import {
 import client from '@/api/client'
 import type { Category } from '@/types'
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  color: z.string().min(1, 'Color is required'),
-  icon: z.string().min(1, 'Icon is required'),
-})
-
-type FormData = z.infer<typeof schema>
+type FormData = { name: string; color: string; icon: string }
 
 function CategoryForm({
   defaultValues,
@@ -35,6 +30,18 @@ function CategoryForm({
   onSubmit: (data: FormData) => void
   isPending: boolean
 }) {
+  const { t } = useTranslation()
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t('categories.nameRequired')),
+        color: z.string().min(1, t('categories.colorRequired')),
+        icon: z.string().min(1, t('categories.iconRequired')),
+      }),
+    [t]
+  )
+
   const {
     register,
     handleSubmit,
@@ -47,14 +54,14 @@ function CategoryForm({
   return (
     <form id="category-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{t('categories.name')}</Label>
         <Input id="name" {...register('name')} />
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="color">Color</Label>
+          <Label htmlFor="color">{t('categories.color')}</Label>
           <input
             id="color"
             type="color"
@@ -65,7 +72,7 @@ function CategoryForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="icon">Icon (emoji)</Label>
+          <Label htmlFor="icon">{t('categories.icon')}</Label>
           <Input id="icon" {...register('icon')} />
           {errors.icon && <p className="text-sm text-destructive">{errors.icon.message}</p>}
         </div>
@@ -73,7 +80,7 @@ function CategoryForm({
 
       <DialogFooter>
         <Button type="submit" form="category-form" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save'}
+          {isPending ? t('categories.saving') : t('categories.save')}
         </Button>
       </DialogFooter>
     </form>
@@ -81,6 +88,7 @@ function CategoryForm({
 }
 
 export default function CategoriesPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Category | null>(null)
@@ -113,19 +121,21 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
-          <p className="text-muted-foreground text-sm">{categories.length} categories</p>
+          <h1 className="text-2xl font-bold">{t('categories.title')}</h1>
+          <p className="text-muted-foreground text-sm">
+            {t('categories.count', { count: categories.length })}
+          </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
-          New Category
+          {t('categories.newCategory')}
         </Button>
       </div>
 
       {categories.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            No categories yet. Create one to start tracking expenses.
+            {t('categories.noCategories')}
           </CardContent>
         </Card>
       ) : (
@@ -143,11 +153,7 @@ export default function CategoriesPage() {
                   <span className="font-medium">{cat.name}</span>
                 </div>
                 <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setEditTarget(cat)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => setEditTarget(cat)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
@@ -165,11 +171,10 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Category</DialogTitle>
+            <DialogTitle>{t('categories.createTitle')}</DialogTitle>
           </DialogHeader>
           <CategoryForm
             onSubmit={(data) => createMutation.mutate(data)}
@@ -178,11 +183,10 @@ export default function CategoriesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Category</DialogTitle>
+            <DialogTitle>{t('categories.editTitle')}</DialogTitle>
           </DialogHeader>
           {editTarget && (
             <CategoryForm
@@ -194,26 +198,25 @@ export default function CategoriesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
+            <DialogTitle>{t('categories.deleteTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This cannot be
-            undone.
+            {t('categories.deleteConfirm')} <strong>{deleteTarget?.name}</strong>?{' '}
+            {t('categories.deleteWarning')}
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {t('categories.cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => deleteMutation.mutate()}
             >
-              {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+              {deleteMutation.isPending ? t('categories.deleting') : t('categories.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

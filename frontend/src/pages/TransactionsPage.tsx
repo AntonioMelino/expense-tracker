@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,31 +27,13 @@ import {
 import client from '@/api/client'
 import type { Category, PagedResult, Transaction } from '@/types'
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+type FormData = {
+  amount: number
+  description: string
+  date: string
+  type: number
+  categoryId: string
 }
-
-function formatDate(dateStr: string) {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(
-    new Date(y, m - 1, d)
-  )
-}
-
-const schema = z.object({
-  amount: z.number().positive('Amount must be positive'),
-  description: z.string().min(1, 'Description is required'),
-  date: z.string().min(1, 'Date is required'),
-  type: z.number().int().min(0).max(1),
-  categoryId: z.string().min(1, 'Please select a category'),
-})
-
-type FormData = z.infer<typeof schema>
 
 function TransactionForm({
   defaultValues,
@@ -63,6 +46,20 @@ function TransactionForm({
   onSubmit: (data: FormData) => void
   isPending: boolean
 }) {
+  const { t, i18n } = useTranslation()
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        amount: z.number().positive(t('transactions.amountPositive')),
+        description: z.string().min(1, t('transactions.descriptionRequired')),
+        date: z.string().min(1, t('transactions.dateRequired')),
+        type: z.number().int().min(0).max(1),
+        categoryId: z.string().min(1, t('transactions.categoryRequired')),
+      }),
+    [t]
+  )
+
   const {
     register,
     handleSubmit,
@@ -88,20 +85,26 @@ function TransactionForm({
     <form id="transaction-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
-          <Input id="amount" type="number" step="0.01" min="0.01" {...register('amount', { valueAsNumber: true })} />
+          <Label htmlFor="amount">{t('transactions.amount')}</Label>
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register('amount', { valueAsNumber: true })}
+          />
           {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
+          <Label htmlFor="date">{t('transactions.date')}</Label>
           <Input id="date" type="date" {...register('date')} />
           {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{t('transactions.description')}</Label>
         <Input id="description" {...register('description')} />
         {errors.description && (
           <p className="text-sm text-destructive">{errors.description.message}</p>
@@ -110,7 +113,7 @@ function TransactionForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Type</Label>
+          <Label>{t('transactions.type')}</Label>
           <Select
             value={String(type)}
             onValueChange={(v) => setValue('type', Number(v) as 0 | 1)}
@@ -119,17 +122,17 @@ function TransactionForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0">Income</SelectItem>
-              <SelectItem value="1">Expense</SelectItem>
+              <SelectItem value="0">{t('transactions.income')}</SelectItem>
+              <SelectItem value="1">{t('transactions.expense')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Category</Label>
+          <Label>{t('transactions.category')}</Label>
           <Select value={categoryId} onValueChange={(v) => setValue('categoryId', v)}>
             <SelectTrigger>
-              <SelectValue placeholder="Select…" />
+              <SelectValue placeholder={t('transactions.selectCategory')} />
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
@@ -147,7 +150,7 @@ function TransactionForm({
 
       <DialogFooter>
         <Button type="submit" form="transaction-form" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save'}
+          {isPending ? t('transactions.saving') : t('transactions.save')}
         </Button>
       </DialogFooter>
     </form>
@@ -157,6 +160,7 @@ function TransactionForm({
 const PAGE_SIZE = 10
 
 export default function TransactionsPage() {
+  const { t, i18n } = useTranslation()
   const qc = useQueryClient()
   const now = new Date()
 
@@ -169,6 +173,19 @@ export default function TransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null)
+
+  const locale = i18n.language === 'es' ? 'es-AR' : 'en-US'
+  const months = t('months.full', { returnObjects: true }) as string[]
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(amount)
+
+  const formatDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(
+      new Date(y, m - 1, d)
+    )
+  }
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -208,25 +225,25 @@ export default function TransactionsPage() {
   })
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1
-
   const resetPage = () => setPage(1)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Transactions</h1>
+          <h1 className="text-2xl font-bold">{t('transactions.title')}</h1>
           {data && (
-            <p className="text-muted-foreground text-sm">{data.total} transactions found</p>
+            <p className="text-muted-foreground text-sm">
+              {t('transactions.found', { count: data.total })}
+            </p>
           )}
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
-          New Transaction
+          {t('transactions.newTransaction')}
         </Button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <Select
           value={String(month)}
@@ -236,7 +253,7 @@ export default function TransactionsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {MONTHS.map((m, i) => (
+            {months.map((m, i) => (
               <SelectItem key={i + 1} value={String(i + 1)}>
                 {m}
               </SelectItem>
@@ -265,10 +282,10 @@ export default function TransactionsPage() {
           onValueChange={(v) => { setCategoryId(v === 'all' ? '' : v); resetPage() }}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="All categories" />
+            <SelectValue placeholder={t('transactions.allCategories')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="all">{t('transactions.allCategories')}</SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
                 {cat.icon} {cat.name}
@@ -282,23 +299,22 @@ export default function TransactionsPage() {
           onValueChange={(v) => { setType(v === 'all' ? '' : v); resetPage() }}
         >
           <SelectTrigger className="w-32">
-            <SelectValue placeholder="All types" />
+            <SelectValue placeholder={t('transactions.allTypes')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="0">Income</SelectItem>
-            <SelectItem value="1">Expense</SelectItem>
+            <SelectItem value="all">{t('transactions.allTypes')}</SelectItem>
+            <SelectItem value="0">{t('transactions.income')}</SelectItem>
+            <SelectItem value="1">{t('transactions.expense')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="text-center text-muted-foreground py-8">Loading…</p>
+            <p className="text-center text-muted-foreground py-8">{t('transactions.loading')}</p>
           ) : !data?.items.length ? (
-            <p className="text-center text-muted-foreground py-8">No transactions found</p>
+            <p className="text-center text-muted-foreground py-8">{t('transactions.noTransactions')}</p>
           ) : (
             <div className="divide-y">
               {data.items.map((tx) => (
@@ -313,7 +329,7 @@ export default function TransactionsPage() {
                   </div>
 
                   <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="shrink-0">
-                    {tx.type === 0 ? 'Income' : 'Expense'}
+                    {tx.type === 0 ? t('transactions.income') : t('transactions.expense')}
                   </Badge>
 
                   <span
@@ -326,11 +342,7 @@ export default function TransactionsPage() {
                   </span>
 
                   <div className="flex gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditTarget(tx)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => setEditTarget(tx)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -349,7 +361,6 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <Button
@@ -361,7 +372,7 @@ export default function TransactionsPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t('transactions.page')} {page} {t('transactions.of')} {totalPages}
           </span>
           <Button
             variant="outline"
@@ -374,11 +385,10 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Transaction</DialogTitle>
+            <DialogTitle>{t('transactions.createTitle')}</DialogTitle>
           </DialogHeader>
           <TransactionForm
             categories={categories}
@@ -388,11 +398,10 @@ export default function TransactionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Transaction</DialogTitle>
+            <DialogTitle>{t('transactions.editTitle')}</DialogTitle>
           </DialogHeader>
           {editTarget && (
             <TransactionForm
@@ -411,26 +420,25 @@ export default function TransactionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Transaction</DialogTitle>
+            <DialogTitle>{t('transactions.deleteTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{deleteTarget?.description}</strong>? This
-            cannot be undone.
+            {t('transactions.deleteConfirm')} <strong>{deleteTarget?.description}</strong>?{' '}
+            {t('transactions.deleteWarning')}
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {t('transactions.cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => deleteMutation.mutate()}
             >
-              {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+              {deleteMutation.isPending ? t('transactions.deleting') : t('transactions.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

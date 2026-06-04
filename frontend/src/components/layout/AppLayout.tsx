@@ -1,15 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet, Globe } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import client from '@/api/client'
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
-  { to: '/categories', icon: Tag, label: 'Categories' },
-]
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -18,6 +13,13 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/transactions', icon: ArrowLeftRight, label: t('nav.transactions') },
+    { to: '/categories', icon: Tag, label: t('nav.categories') },
+  ]
 
   const handleLogout = async () => {
     try {
@@ -29,12 +31,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
     navigate('/login')
   }
 
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'es' ? 'en' : 'es')
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <aside className="w-60 border-r bg-card flex flex-col shrink-0">
         <div className="p-5 flex items-center gap-2">
           <Wallet className="h-5 w-5 text-primary" />
-          <span className="font-bold">Expense Tracker</span>
+          <span className="font-bold">{t('appName')}</span>
         </div>
 
         <Separator />
@@ -68,10 +74,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground"
+            onClick={toggleLanguage}
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            {t('language.toggle')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Logout
+            {t('nav.logout')}
           </Button>
         </div>
       </aside>

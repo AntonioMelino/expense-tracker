@@ -1,28 +1,31 @@
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import client from '@/api/client'
 import type { MonthlySummary, PagedResult, Transaction } from '@/types'
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
-}
-
-function formatDate(dateStr: string) {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
-    new Date(y, m - 1, d)
-  )
-}
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 export default function DashboardPage() {
+  const { t, i18n } = useTranslation()
   const now = new Date()
   const month = now.getMonth() + 1
   const year = now.getFullYear()
+
+  const locale = i18n.language === 'es' ? 'es-AR' : 'en-US'
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(amount)
+
+  const formatDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
+      new Date(y, m - 1, d)
+    )
+  }
+
+  const months = t('months.short', { returnObjects: true }) as string[]
 
   const { data: summary } = useQuery<MonthlySummary>({
     queryKey: ['summary', month, year],
@@ -38,49 +41,57 @@ export default function DashboardPage() {
         .then((r) => r.data),
   })
 
+  const incomeLabel = t('dashboard.income')
+  const expensesLabel = t('dashboard.expenses')
   const chartData = summary
-    ? [{ name: MONTHS[month - 1], Income: summary.totalIncome, Expenses: summary.totalExpenses }]
+    ? [{ name: months[month - 1], [incomeLabel]: summary.totalIncome, [expensesLabel]: summary.totalExpenses }]
     : []
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
         <p className="text-muted-foreground text-sm">
-          {MONTHS[month - 1]} {year}
+          {months[month - 1]} {year}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Income</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t('dashboard.income')}
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">
               {formatCurrency(summary?.totalIncome ?? 0)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t('dashboard.expenses')}
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-red-600">
               {formatCurrency(summary?.totalExpenses ?? 0)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net Balance</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t('dashboard.netBalance')}
+            </CardTitle>
             <Wallet className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -89,7 +100,7 @@ export default function DashboardPage() {
             >
               {formatCurrency(summary?.net ?? 0)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
           </CardContent>
         </Card>
       </div>
@@ -97,7 +108,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Income vs Expenses</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.incomeVsExpenses')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -106,8 +117,8 @@ export default function DashboardPage() {
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Legend />
-                <Bar dataKey="Income" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={incomeLabel} fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={expensesLabel} fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -115,12 +126,12 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recent Transactions</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.recentTransactions')}</CardTitle>
           </CardHeader>
           <CardContent>
             {!recent?.items.length ? (
               <p className="text-muted-foreground text-sm text-center py-6">
-                No transactions this month
+                {t('dashboard.noTransactionsThisMonth')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -137,7 +148,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">
                       <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="text-xs">
-                        {tx.type === 0 ? 'Income' : 'Expense'}
+                        {tx.type === 0 ? t('dashboard.incomeBadge') : t('dashboard.expenseBadge')}
                       </Badge>
                       <span
                         className={`text-sm font-semibold ${tx.type === 0 ? 'text-green-600' : 'text-red-600'}`}
