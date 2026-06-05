@@ -48,6 +48,8 @@ const es = {
     noTransactionsThisMonth: 'Sin transacciones este mes',
     incomeBadge: 'Ingreso',
     expenseBadge: 'Gasto',
+    expensesByCategory: 'Gastos por categoría',
+    noExpensesThisMonth: 'Sin gastos este mes',
   },
 
   common: {

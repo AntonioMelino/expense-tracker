@@ -48,6 +48,8 @@ const en = {
     noTransactionsThisMonth: 'No transactions this month',
     incomeBadge: 'Income',
     expenseBadge: 'Expense',
+    expensesByCategory: 'Expenses by Category',
+    noExpensesThisMonth: 'No expenses this month',
   },
 
   common: {

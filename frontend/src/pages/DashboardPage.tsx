@@ -1,7 +1,11 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell,
+} from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import client from '@/api/client'
@@ -39,9 +43,35 @@ export default function DashboardPage() {
       client.get(`/transactions?month=${month}&year=${year}&page=1&pageSize=5`).then((r) => r.data),
   })
 
+  const { data: expensesRaw } = useQuery<PagedResult<Transaction>>({
+    queryKey: ['transactions', { month, year, type: '1', page: 1, pageSize: 500 }],
+    queryFn: () =>
+      client
+        .get(`/transactions?month=${month}&year=${year}&type=1&page=1&pageSize=500`)
+        .then((r) => r.data),
+  })
+
+  const pieData = useMemo(() => {
+    if (!expensesRaw?.items.length) return []
+    const map = new Map<string, { name: string; value: number; color: string }>()
+    for (const tx of expensesRaw.items) {
+      const entry = map.get(tx.categoryId)
+      if (entry) {
+        entry.value += tx.amount
+      } else {
+        map.set(tx.categoryId, {
+          name: `${tx.categoryIcon} ${tx.categoryName}`,
+          value: tx.amount,
+          color: tx.categoryColor,
+        })
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.value - a.value)
+  }, [expensesRaw])
+
   const incomeLabel = t('dashboard.income')
   const expensesLabel = t('dashboard.expenses')
-  const chartData = summary
+  const barData = summary
     ? [{ name: months[month - 1], [incomeLabel]: summary.totalIncome, [expensesLabel]: summary.totalExpenses }]
     : []
 
@@ -104,15 +134,16 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Chart + recent transactions */}
+      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+        {/* Bar chart: income vs expenses */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm md:text-base">{t('dashboard.incomeVsExpenses')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} barCategoryGap="40%">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} barCategoryGap="40%">
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} width={50} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
@@ -124,43 +155,81 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Pie chart: expenses by category */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm md:text-base">{t('dashboard.recentTransactions')}</CardTitle>
+            <CardTitle className="text-sm md:text-base">{t('dashboard.expensesByCategory')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {!recent?.items.length ? (
-              <p className="text-muted-foreground text-sm text-center py-6">
-                {t('dashboard.noTransactionsThisMonth')}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recent.items.map((tx) => (
-                  <div key={tx.id} className="flex items-center gap-3">
-                    <span className="text-lg shrink-0">{tx.categoryIcon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{tx.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tx.categoryName} · {formatDate(tx.date)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span
-                        className={`text-sm font-semibold ${tx.type === 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {tx.type === 0 ? '+' : '-'}{formatCurrency(tx.amount)}
-                      </span>
-                      <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="text-xs">
-                        {tx.type === 0 ? t('dashboard.incomeBadge') : t('dashboard.expenseBadge')}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+            {pieData.length === 0 ? (
+              <div className="flex items-center justify-center h-[200px]">
+                <p className="text-muted-foreground text-sm">{t('dashboard.noExpensesThisMonth')}</p>
               </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                    formatter={(value) => <span style={{ color: 'inherit' }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent transactions — full width */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm md:text-base">{t('dashboard.recentTransactions')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!recent?.items.length ? (
+            <p className="text-muted-foreground text-sm text-center py-6">
+              {t('dashboard.noTransactionsThisMonth')}
+            </p>
+          ) : (
+            <div className="divide-y">
+              {recent.items.map((tx) => (
+                <div key={tx.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="text-lg shrink-0">{tx.categoryIcon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{tx.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tx.categoryName} · {formatDate(tx.date)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span
+                      className={`text-sm font-semibold ${tx.type === 0 ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {tx.type === 0 ? '+' : '-'}{formatCurrency(tx.amount)}
+                    </span>
+                    <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="text-xs">
+                      {tx.type === 0 ? t('dashboard.incomeBadge') : t('dashboard.expenseBadge')}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
