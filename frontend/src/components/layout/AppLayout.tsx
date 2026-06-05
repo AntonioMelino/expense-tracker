@@ -1,7 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet, Globe } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet, Globe, Moon, Sun } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
+import { useThemeStore } from '@/store/themeStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import client from '@/api/client'
@@ -12,6 +13,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuthStore()
+  const { isDark, toggle: toggleTheme } = useThemeStore()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
@@ -80,6 +82,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground"
+            onClick={toggleTheme}
+            aria-label={isDark ? t('theme.toggleLight') : t('theme.toggleDark')}
+          >
+            {isDark ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+            {isDark ? t('theme.toggleLight') : t('theme.toggleDark')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -97,6 +109,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <span className="font-semibold text-sm">{t('appName')}</span>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={toggleTheme}
+              aria-label={isDark ? t('theme.toggleLight') : t('theme.toggleDark')}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-8 w-8">
               <Globe className="h-4 w-4" />
             </Button>

@@ -13,6 +13,11 @@ const es = {
     current: 'ES',
   },
 
+  theme: {
+    toggleLight: 'Cambiar a modo claro',
+    toggleDark: 'Cambiar a modo oscuro',
+  },
+
   auth: {
     email: 'Correo electrónico',
     password: 'Contraseña',
