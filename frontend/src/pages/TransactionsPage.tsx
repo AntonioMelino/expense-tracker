@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -210,18 +211,21 @@ export default function TransactionsPage() {
 
   const createMutation = useMutation({
     mutationFn: (fd: FormData) => client.post('/transactions', fd).then((r) => r.data),
-    onSuccess: () => { invalidate(); setCreateOpen(false) },
+    onSuccess: () => { invalidate(); setCreateOpen(false); toast.success(t('transactions.toastCreated')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const updateMutation = useMutation({
     mutationFn: (fd: FormData) =>
       client.put(`/transactions/${editTarget!.id}`, fd).then((r) => r.data),
-    onSuccess: () => { invalidate(); setEditTarget(null) },
+    onSuccess: () => { invalidate(); setEditTarget(null); toast.success(t('transactions.toastUpdated')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => client.delete(`/transactions/${deleteTarget!.id}`),
-    onSuccess: () => { invalidate(); setDeleteTarget(null) },
+    onSuccess: () => { invalidate(); setDeleteTarget(null); toast.success(t('transactions.toastDeleted')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1

@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
+import { useThemeStore } from '@/store/themeStore'
 import AuthLayout from '@/components/layout/AuthLayout'
 import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/pages/LoginPage'
@@ -31,8 +33,11 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const isDark = useThemeStore((s) => s.isDark)
+
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster theme={isDark ? 'dark' : 'light'} richColors position="top-right" />
       <BrowserRouter>
         <Routes>
           <Route

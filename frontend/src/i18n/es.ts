@@ -50,6 +50,10 @@ const es = {
     expenseBadge: 'Gasto',
   },
 
+  common: {
+    error: 'Algo salió mal. Intentá de nuevo.',
+  },
+
   categories: {
     title: 'Categorías',
     count_one: '{{count}} categoría',
@@ -72,6 +76,9 @@ const es = {
     nameRequired: 'El nombre es requerido',
     colorRequired: 'El color es requerido',
     iconRequired: 'El ícono es requerido',
+    toastCreated: 'Categoría creada',
+    toastUpdated: 'Categoría actualizada',
+    toastDeleted: 'Categoría eliminada',
   },
 
   transactions: {
@@ -107,6 +114,9 @@ const es = {
     descriptionRequired: 'La descripción es requerida',
     dateRequired: 'La fecha es requerida',
     categoryRequired: 'Seleccioná una categoría',
+    toastCreated: 'Transacción creada',
+    toastUpdated: 'Transacción actualizada',
+    toastDeleted: 'Transacción eliminada',
   },
 
   months: {

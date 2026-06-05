@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -103,18 +104,21 @@ export default function CategoriesPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: FormData) => client.post('/categories', data).then((r) => r.data),
-    onSuccess: () => { invalidate(); setCreateOpen(false) },
+    onSuccess: () => { invalidate(); setCreateOpen(false); toast.success(t('categories.toastCreated')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const updateMutation = useMutation({
     mutationFn: (data: FormData) =>
       client.put(`/categories/${editTarget!.id}`, data).then((r) => r.data),
-    onSuccess: () => { invalidate(); setEditTarget(null) },
+    onSuccess: () => { invalidate(); setEditTarget(null); toast.success(t('categories.toastUpdated')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => client.delete(`/categories/${deleteTarget!.id}`),
-    onSuccess: () => { invalidate(); setDeleteTarget(null) },
+    onSuccess: () => { invalidate(); setDeleteTarget(null); toast.success(t('categories.toastDeleted')) },
+    onError: () => toast.error(t('common.error')),
   })
 
   return (
