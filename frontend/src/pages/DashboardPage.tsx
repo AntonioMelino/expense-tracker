@@ -36,9 +36,7 @@ export default function DashboardPage() {
   const { data: recent } = useQuery<PagedResult<Transaction>>({
     queryKey: ['transactions', { month, year, page: 1, pageSize: 5 }],
     queryFn: () =>
-      client
-        .get(`/transactions?month=${month}&year=${year}&page=1&pageSize=5`)
-        .then((r) => r.data),
+      client.get(`/transactions?month=${month}&year=${year}&page=1&pageSize=5`).then((r) => r.data),
   })
 
   const incomeLabel = t('dashboard.income')
@@ -48,24 +46,25 @@ export default function DashboardPage() {
     : []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+        <h1 className="text-xl md:text-2xl font-bold">{t('dashboard.title')}</h1>
         <p className="text-muted-foreground text-sm">
           {months[month - 1]} {year}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t('dashboard.income')}
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-green-500 shrink-0" />
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">
+          <CardContent className="px-4 pb-4">
+            <p className="text-xl md:text-2xl font-bold text-green-600">
               {formatCurrency(summary?.totalIncome ?? 0)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
@@ -73,14 +72,14 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t('dashboard.expenses')}
             </CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
+            <TrendingDown className="h-4 w-4 text-red-500 shrink-0" />
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-600">
+          <CardContent className="px-4 pb-4">
+            <p className="text-xl md:text-2xl font-bold text-red-600">
               {formatCurrency(summary?.totalExpenses ?? 0)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
@@ -88,15 +87,15 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t('dashboard.netBalance')}
             </CardTitle>
-            <Wallet className="h-4 w-4 text-blue-500" />
+            <Wallet className="h-4 w-4 text-blue-500 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             <p
-              className={`text-2xl font-bold ${(summary?.net ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              className={`text-xl md:text-2xl font-bold ${(summary?.net ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}
             >
               {formatCurrency(summary?.net ?? 0)}
             </p>
@@ -105,18 +104,19 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Chart + recent transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('dashboard.incomeVsExpenses')}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm md:text-base">{t('dashboard.incomeVsExpenses')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={chartData} barCategoryGap="40%">
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} width={50} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey={incomeLabel} fill="#22c55e" radius={[4, 4, 0, 0]} />
                 <Bar dataKey={expensesLabel} fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -125,8 +125,8 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('dashboard.recentTransactions')}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm md:text-base">{t('dashboard.recentTransactions')}</CardTitle>
           </CardHeader>
           <CardContent>
             {!recent?.items.length ? (
@@ -136,26 +136,23 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {recent.items.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-lg shrink-0">{tx.categoryIcon}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{tx.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {tx.categoryName} · {formatDate(tx.date)}
-                        </p>
-                      </div>
+                  <div key={tx.id} className="flex items-center gap-3">
+                    <span className="text-lg shrink-0">{tx.categoryIcon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{tx.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {tx.categoryName} · {formatDate(tx.date)}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-3">
-                      <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="text-xs">
-                        {tx.type === 0 ? t('dashboard.incomeBadge') : t('dashboard.expenseBadge')}
-                      </Badge>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
                       <span
                         className={`text-sm font-semibold ${tx.type === 0 ? 'text-green-600' : 'text-red-600'}`}
                       >
-                        {tx.type === 0 ? '+' : '-'}
-                        {formatCurrency(tx.amount)}
+                        {tx.type === 0 ? '+' : '-'}{formatCurrency(tx.amount)}
                       </span>
+                      <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="text-xs">
+                        {tx.type === 0 ? t('dashboard.incomeBadge') : t('dashboard.expenseBadge')}
+                      </Badge>
                     </div>
                   </div>
                 ))}

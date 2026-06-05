@@ -46,7 +46,7 @@ function TransactionForm({
   onSubmit: (data: FormData) => void
   isPending: boolean
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const schema = useMemo(
     () =>
@@ -228,28 +228,30 @@ export default function TransactionsPage() {
   const resetPage = () => setPage(1)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t('transactions.title')}</h1>
+    <div className="space-y-4 md:space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold">{t('transactions.title')}</h1>
           {data && (
             <p className="text-muted-foreground text-sm">
               {t('transactions.found', { count: data.total })}
             </p>
           )}
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          {t('transactions.newTransaction')}
+        <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+          <Plus className="h-4 w-4 md:mr-1" />
+          <span className="hidden sm:inline">{t('transactions.newTransaction')}</span>
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      {/* Filters: 2-col grid on mobile, flex row on sm+ */}
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
         <Select
           value={String(month)}
           onValueChange={(v) => { setMonth(Number(v)); resetPage() }}
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-full sm:w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -265,7 +267,7 @@ export default function TransactionsPage() {
           value={String(year)}
           onValueChange={(v) => { setYear(Number(v)); resetPage() }}
         >
-          <SelectTrigger className="w-28">
+          <SelectTrigger className="w-full sm:w-28">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -281,7 +283,7 @@ export default function TransactionsPage() {
           value={categoryId || 'all'}
           onValueChange={(v) => { setCategoryId(v === 'all' ? '' : v); resetPage() }}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder={t('transactions.allCategories')} />
           </SelectTrigger>
           <SelectContent>
@@ -298,7 +300,7 @@ export default function TransactionsPage() {
           value={type || 'all'}
           onValueChange={(v) => { setType(v === 'all' ? '' : v); resetPage() }}
         >
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-full sm:w-32">
             <SelectValue placeholder={t('transactions.allTypes')} />
           </SelectTrigger>
           <SelectContent>
@@ -309,6 +311,7 @@ export default function TransactionsPage() {
         </Select>
       </div>
 
+      {/* Transaction list */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -318,40 +321,51 @@ export default function TransactionsPage() {
           ) : (
             <div className="divide-y">
               {data.items.map((tx) => (
-                <div key={tx.id} className="flex items-center gap-4 px-4 py-3">
+                <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="text-xl shrink-0">{tx.categoryIcon}</span>
 
+                  {/* Main info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {tx.categoryName} · {formatDate(tx.date)}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium truncate">{tx.description}</p>
+                      <span
+                        className={`text-sm font-semibold shrink-0 ${
+                          tx.type === 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      >
+                        {tx.type === 0 ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {tx.categoryName} · {formatDate(tx.date)}
+                      </p>
+                      <Badge
+                        variant={tx.type === 0 ? 'default' : 'destructive'}
+                        className="text-xs shrink-0 hidden xs:inline-flex"
+                      >
+                        {tx.type === 0 ? t('transactions.income') : t('transactions.expense')}
+                      </Badge>
+                    </div>
                   </div>
 
-                  <Badge variant={tx.type === 0 ? 'default' : 'destructive'} className="shrink-0">
-                    {tx.type === 0 ? t('transactions.income') : t('transactions.expense')}
-                  </Badge>
-
-                  <span
-                    className={`text-sm font-semibold w-24 text-right shrink-0 ${
-                      tx.type === 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {tx.type === 0 ? '+' : '-'}
-                    {formatCurrency(tx.amount)}
-                  </span>
-
+                  {/* Actions */}
                   <div className="flex gap-1 shrink-0">
-                    <Button variant="ghost" size="icon" onClick={() => setEditTarget(tx)}>
-                      <Pencil className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setEditTarget(tx)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => setDeleteTarget(tx)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -361,6 +375,7 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <Button
@@ -385,8 +400,9 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      {/* Dialogs */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('transactions.createTitle')}</DialogTitle>
           </DialogHeader>
@@ -399,7 +415,7 @@ export default function TransactionsPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('transactions.editTitle')}</DialogTitle>
           </DialogHeader>
@@ -421,7 +437,7 @@ export default function TransactionsPage() {
       </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('transactions.deleteTitle')}</DialogTitle>
           </DialogHeader>
@@ -429,7 +445,7 @@ export default function TransactionsPage() {
             {t('transactions.deleteConfirm')} <strong>{deleteTarget?.description}</strong>?{' '}
             {t('transactions.deleteWarning')}
           </p>
-          <DialogFooter>
+          <DialogFooter className="flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
               {t('transactions.cancel')}
             </Button>

@@ -118,41 +118,41 @@ export default function CategoriesPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t('categories.title')}</h1>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold truncate">{t('categories.title')}</h1>
           <p className="text-muted-foreground text-sm">
             {t('categories.count', { count: categories.length })}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          {t('categories.newCategory')}
+        <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+          <Plus className="h-4 w-4 md:mr-1" />
+          <span className="hidden sm:inline">{t('categories.newCategory')}</span>
         </Button>
       </div>
 
       {categories.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
+          <CardContent className="py-12 text-center text-muted-foreground text-sm">
             {t('categories.noCategories')}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {categories.map((cat) => (
             <Card key={cat.id}>
               <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
                     style={{ backgroundColor: `${cat.color}22`, border: `2px solid ${cat.color}` }}
                   >
                     {cat.icon}
                   </div>
-                  <span className="font-medium">{cat.name}</span>
+                  <span className="font-medium truncate">{cat.name}</span>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 shrink-0">
                   <Button variant="ghost" size="icon" onClick={() => setEditTarget(cat)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -172,7 +172,7 @@ export default function CategoriesPage() {
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('categories.createTitle')}</DialogTitle>
           </DialogHeader>
@@ -184,7 +184,7 @@ export default function CategoriesPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('categories.editTitle')}</DialogTitle>
           </DialogHeader>
@@ -199,7 +199,7 @@ export default function CategoriesPage() {
       </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md">
           <DialogHeader>
             <DialogTitle>{t('categories.deleteTitle')}</DialogTitle>
           </DialogHeader>
@@ -207,7 +207,7 @@ export default function CategoriesPage() {
             {t('categories.deleteConfirm')} <strong>{deleteTarget?.name}</strong>?{' '}
             {t('categories.deleteWarning')}
           </p>
-          <DialogFooter>
+          <DialogFooter className="flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
               {t('categories.cancel')}
             </Button>
