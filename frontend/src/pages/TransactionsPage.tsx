@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -385,7 +386,24 @@ export default function TransactionsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="text-center text-muted-foreground py-8">{t('transactions.loading')}</p>
+            <div className="divide-y">
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex justify-between gap-2">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-16 shrink-0" />
+                    </div>
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : !data?.items.length ? (
             <p className="text-center text-muted-foreground py-8">{t('transactions.noTransactions')}</p>
           ) : (

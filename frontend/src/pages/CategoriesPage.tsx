@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -95,7 +96,7 @@ export default function CategoriesPage() {
   const [editTarget, setEditTarget] = useState<Category | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
-  const { data: categories = [] } = useQuery<Category[]>({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: () => client.get('/categories').then((r) => r.data),
   })
@@ -136,7 +137,24 @@ export default function CategoriesPage() {
         </Button>
       </div>
 
-      {categories.length === 0 ? (
+      {categoriesLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex gap-1">
+                  <Skeleton className="h-8 w-8" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : categories.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground text-sm">
             {t('categories.noCategories')}

@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import client from '@/api/client'
 import type { MonthlySummary, PagedResult, Transaction } from '@/types'
 
@@ -59,19 +60,19 @@ export default function DashboardPage() {
   const months = t('months.short', { returnObjects: true }) as string[]
   const monthsFull = t('months.full', { returnObjects: true }) as string[]
 
-  const { data: summary } = useQuery<MonthlySummary>({
+  const { data: summary, isLoading: summaryLoading } = useQuery<MonthlySummary>({
     queryKey: ['summary', month, year],
     queryFn: () =>
       client.get(`/transactions/summary?month=${month}&year=${year}`).then((r) => r.data),
   })
 
-  const { data: recent } = useQuery<PagedResult<Transaction>>({
+  const { data: recent, isLoading: recentLoading } = useQuery<PagedResult<Transaction>>({
     queryKey: ['transactions', { month, year, page: 1, pageSize: 5 }],
     queryFn: () =>
       client.get(`/transactions?month=${month}&year=${year}&page=1&pageSize=5`).then((r) => r.data),
   })
 
-  const { data: expensesRaw } = useQuery<PagedResult<Transaction>>({
+  const { data: expensesRaw, isLoading: expensesLoading } = useQuery<PagedResult<Transaction>>({
     queryKey: ['transactions', { month, year, type: '1', page: 1, pageSize: 500 }],
     queryFn: () =>
       client
@@ -138,52 +139,69 @@ export default function DashboardPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('dashboard.income')}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500 shrink-0" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-xl md:text-2xl font-bold text-green-600">
-              {formatCurrency(summary?.totalIncome ?? 0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
-          </CardContent>
-        </Card>
+        {summaryLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t('dashboard.income')}
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-500 shrink-0" />
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <p className="text-xl md:text-2xl font-bold text-green-600">
+                  {formatCurrency(summary?.totalIncome ?? 0)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('dashboard.expenses')}
-            </CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500 shrink-0" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p className="text-xl md:text-2xl font-bold text-red-600">
-              {formatCurrency(summary?.totalExpenses ?? 0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t('dashboard.expenses')}
+                </CardTitle>
+                <TrendingDown className="h-4 w-4 text-red-500 shrink-0" />
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <p className="text-xl md:text-2xl font-bold text-red-600">
+                  {formatCurrency(summary?.totalExpenses ?? 0)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t('dashboard.netBalance')}
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-blue-500 shrink-0" />
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <p
-              className={`text-xl md:text-2xl font-bold ${(summary?.net ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}
-            >
-              {formatCurrency(summary?.net ?? 0)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t('dashboard.netBalance')}
+                </CardTitle>
+                <Wallet className="h-4 w-4 text-blue-500 shrink-0" />
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <p
+                  className={`text-xl md:text-2xl font-bold ${(summary?.net ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  {formatCurrency(summary?.net ?? 0)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.thisMonth')}</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Charts row */}
@@ -194,16 +212,20 @@ export default function DashboardPage() {
             <CardTitle className="text-sm md:text-base">{t('dashboard.incomeVsExpenses')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={barData} barCategoryGap="40%">
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} width={50} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey={incomeLabel} fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey={expensesLabel} fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {summaryLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={barData} barCategoryGap="40%">
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} width={50} />
+                  <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey={incomeLabel} fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey={expensesLabel} fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -213,7 +235,9 @@ export default function DashboardPage() {
             <CardTitle className="text-sm md:text-base">{t('dashboard.expensesByCategory')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {pieData.length === 0 ? (
+            {expensesLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : pieData.length === 0 ? (
               <div className="flex items-center justify-center h-[200px]">
                 <p className="text-muted-foreground text-sm">{t('dashboard.noExpensesThisMonth')}</p>
               </div>
@@ -251,7 +275,20 @@ export default function DashboardPage() {
           <CardTitle className="text-sm md:text-base">{t('dashboard.recentTransactions')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {!recent?.items.length ? (
+          {recentLoading ? (
+            <div className="divide-y">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <Skeleton className="h-7 w-7 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-5 w-16 shrink-0" />
+                </div>
+              ))}
+            </div>
+          ) : !recent?.items.length ? (
             <p className="text-muted-foreground text-sm text-center py-6">
               {t('dashboard.noTransactionsThisMonth')}
             </p>
