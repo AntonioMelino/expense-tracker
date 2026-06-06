@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -174,6 +174,7 @@ export default function TransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const locale = i18n.language === 'es' ? 'es-AR' : 'en-US'
   const months = t('months.full', { returnObjects: true }) as string[]
@@ -231,6 +232,59 @@ export default function TransactionsPage() {
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1
   const resetPage = () => setPage(1)
 
+  const exportToCsv = async () => {
+    setIsExporting(true)
+    try {
+      const exportParams = new URLSearchParams({
+        month: String(month),
+        year: String(year),
+        page: '1',
+        pageSize: '10000',
+      })
+      if (categoryId) exportParams.set('categoryId', categoryId)
+      if (type !== '') exportParams.set('type', type)
+
+      const result = await client.get<PagedResult<Transaction>>(`/transactions?${exportParams}`)
+      const items = result.data.items
+
+      if (!items.length) {
+        toast.info(t('transactions.exportEmpty'))
+        return
+      }
+
+      const headers = [
+        t('transactions.date'),
+        t('transactions.description'),
+        t('transactions.category'),
+        t('transactions.type'),
+        t('transactions.amount'),
+      ]
+
+      const escape = (s: string) => `"${s.replace(/"/g, '""')}"`
+
+      const rows = items.map((tx) => [
+        tx.date,
+        escape(tx.description),
+        escape(tx.categoryName),
+        tx.type === 0 ? t('transactions.income') : t('transactions.expense'),
+        tx.type === 0 ? tx.amount : -tx.amount,
+      ])
+
+      const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `transactions-${year}-${String(month).padStart(2, '0')}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error(t('common.error'))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
@@ -243,10 +297,22 @@ export default function TransactionsPage() {
             </p>
           )}
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="shrink-0">
-          <Plus className="h-4 w-4 md:mr-1" />
-          <span className="hidden sm:inline">{t('transactions.newTransaction')}</span>
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={exportToCsv}
+            disabled={isExporting}
+          >
+            <Download className="h-4 w-4 md:mr-1" />
+            <span className="hidden sm:inline">
+              {isExporting ? t('transactions.exporting') : t('transactions.exportCsv')}
+            </span>
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 md:mr-1" />
+            <span className="hidden sm:inline">{t('transactions.newTransaction')}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filters: 2-col grid on mobile, flex row on sm+ */}

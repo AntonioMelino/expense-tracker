@@ -123,6 +123,9 @@ const en = {
     toastCreated: 'Transaction created',
     toastUpdated: 'Transaction updated',
     toastDeleted: 'Transaction deleted',
+    exportCsv: 'Export CSV',
+    exporting: 'Exporting…',
+    exportEmpty: 'No transactions to export',
   },
 
   profile: {
