@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { TrendingUp, TrendingDown, Wallet } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
@@ -8,14 +8,41 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import client from '@/api/client'
 import type { MonthlySummary, PagedResult, Transaction } from '@/types'
 
 export default function DashboardPage() {
   const { t, i18n } = useTranslation()
   const now = new Date()
-  const month = now.getMonth() + 1
-  const year = now.getFullYear()
+  const [month, setMonth] = useState(now.getMonth() + 1)
+  const [year, setYear] = useState(now.getFullYear())
+
+  const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear()
+
+  const goToPrev = () => {
+    if (month === 1) {
+      setMonth(12)
+      setYear((y) => y - 1)
+    } else {
+      setMonth((m) => m - 1)
+    }
+  }
+
+  const goToNext = () => {
+    if (isCurrentMonth) return
+    if (month === 12) {
+      setMonth(1)
+      setYear((y) => y + 1)
+    } else {
+      setMonth((m) => m + 1)
+    }
+  }
+
+  const goToCurrentMonth = () => {
+    setMonth(now.getMonth() + 1)
+    setYear(now.getFullYear())
+  }
 
   const locale = i18n.language === 'es' ? 'es-AR' : 'en-US'
 
@@ -30,6 +57,7 @@ export default function DashboardPage() {
   }
 
   const months = t('months.short', { returnObjects: true }) as string[]
+  const monthsFull = t('months.full', { returnObjects: true }) as string[]
 
   const { data: summary } = useQuery<MonthlySummary>({
     queryKey: ['summary', month, year],
@@ -77,11 +105,35 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h1 className="text-xl md:text-2xl font-bold">{t('dashboard.title')}</h1>
-        <p className="text-muted-foreground text-sm">
-          {months[month - 1]} {year}
-        </p>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPrev}
+            aria-label={t('dashboard.previousMonth')}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium w-36 text-center">
+            {monthsFull[month - 1]} {year}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNext}
+            disabled={isCurrentMonth}
+            aria-label={t('dashboard.nextMonth')}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          {!isCurrentMonth && (
+            <Button variant="ghost" size="sm" onClick={goToCurrentMonth} className="ml-1 text-xs">
+              {t('dashboard.currentMonth')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary cards */}
