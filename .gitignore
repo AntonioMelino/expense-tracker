@@ -487,6 +487,11 @@ dist/
 .env
 .env.local
 
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+frontend/e2e/.auth/
+
 # Docker
 docker-compose.override.yml
 
