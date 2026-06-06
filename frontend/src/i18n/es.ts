@@ -6,6 +6,7 @@ const es = {
     transactions: 'Transacciones',
     categories: 'Categorías',
     logout: 'Cerrar sesión',
+    profile: 'Perfil',
   },
 
   language: {
@@ -119,6 +120,25 @@ const es = {
     toastCreated: 'Transacción creada',
     toastUpdated: 'Transacción actualizada',
     toastDeleted: 'Transacción eliminada',
+  },
+
+  profile: {
+    title: 'Perfil',
+    editProfile: 'Editar perfil',
+    changePassword: 'Cambiar contraseña',
+    fullName: 'Nombre completo',
+    email: 'Correo electrónico',
+    currentPassword: 'Contraseña actual',
+    newPassword: 'Nueva contraseña',
+    confirmPassword: 'Confirmar contraseña',
+    save: 'Guardar',
+    saving: 'Guardando…',
+    passwordsDoNotMatch: 'Las contraseñas no coinciden',
+    fullNameMin: 'El nombre debe tener al menos 2 caracteres',
+    currentPasswordRequired: 'La contraseña actual es requerida',
+    newPasswordMin: 'La nueva contraseña debe tener al menos 8 caracteres',
+    toastProfileUpdated: 'Perfil actualizado',
+    toastPasswordChanged: 'Contraseña cambiada',
   },
 
   months: {

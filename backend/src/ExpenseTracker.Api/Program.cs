@@ -61,6 +61,7 @@ app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 app.MapAuthEndpoints();
+app.MapProfileEndpoints();
 app.MapCategoryEndpoints();
 app.MapTransactionEndpoints();
 

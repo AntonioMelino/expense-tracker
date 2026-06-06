@@ -7,6 +7,7 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
+  updateUser: (user: User) => void
   logout: () => void
 }
 
@@ -18,6 +19,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       setAuth: (user, accessToken, refreshToken) =>
         set({ user, accessToken, refreshToken }),
+      updateUser: (user) => set({ user }),
       logout: () => set({ user: null, accessToken: null, refreshToken: null }),
     }),
     { name: 'expense-tracker-auth' }

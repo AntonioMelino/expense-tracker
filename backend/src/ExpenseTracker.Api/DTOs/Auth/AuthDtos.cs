@@ -11,3 +11,7 @@ public record UserDto(string Id, string Email, string FullName);
 public record AuthResponse(string AccessToken, string RefreshToken, UserDto User);
 
 public record TokensResponse(string AccessToken, string RefreshToken);
+
+public record UpdateProfileRequest(string FullName);
+
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

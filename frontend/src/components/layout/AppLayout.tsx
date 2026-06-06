@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet, Globe, Moon, Sun } from 'lucide-react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, ArrowLeftRight, Tag, LogOut, Wallet, Globe, Moon, Sun, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
@@ -21,6 +21,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
     { to: '/transactions', icon: ArrowLeftRight, label: t('nav.transactions') },
     { to: '/categories', icon: Tag, label: t('nav.categories') },
+    { to: '/profile', icon: User, label: t('nav.profile') },
   ]
 
   const handleLogout = async () => {
@@ -67,8 +68,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <Separator />
 
         <div className="p-4 space-y-1">
-          <p className="text-sm font-medium truncate">{user?.fullName}</p>
-          <p className="text-xs text-muted-foreground truncate mb-2">{user?.email}</p>
+          <Link to="/profile" className="block hover:opacity-80 transition-opacity mb-2">
+            <p className="text-sm font-medium truncate">{user?.fullName}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          </Link>
           <Button
             variant="ghost"
             size="sm"

@@ -6,6 +6,7 @@ const en = {
     transactions: 'Transactions',
     categories: 'Categories',
     logout: 'Logout',
+    profile: 'Profile',
   },
 
   language: {
@@ -119,6 +120,25 @@ const en = {
     toastCreated: 'Transaction created',
     toastUpdated: 'Transaction updated',
     toastDeleted: 'Transaction deleted',
+  },
+
+  profile: {
+    title: 'Profile',
+    editProfile: 'Edit Profile',
+    changePassword: 'Change Password',
+    fullName: 'Full Name',
+    email: 'Email',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    save: 'Save',
+    saving: 'Saving…',
+    passwordsDoNotMatch: 'Passwords do not match',
+    fullNameMin: 'Full name must be at least 2 characters',
+    currentPasswordRequired: 'Current password is required',
+    newPasswordMin: 'New password must be at least 8 characters',
+    toastProfileUpdated: 'Profile updated',
+    toastPasswordChanged: 'Password changed',
   },
 
   months: {
